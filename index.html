@@ -325,7 +325,7 @@ body.reporting #report { display: block; }
   };
 
   // ---------- Goal definitions ----------
-  const DEFAULT_SEGMENTS = ['Análisis / requerimientos', 'Diseño', 'Implementación', 'Pruebas', 'Despliegue y validación'];
+  const DEFAULT_SEGMENTS = ['Definición', 'Configuración en AgentPlatform', 'Publicación (PR)', 'Despliegue dev + health', 'Prueba E2E'];
   const ratio = r => { const t = num(r.hTrad), a = num(r.hIA); return t && a ? t / a : null; };
   const segHours = (r, S) => S.segments.reduce((acc, s) => acc + (num(r['seg_' + s.id]) || 0), 0);
   const baselineDeadline = S => addDays(S.period.start, 14);
@@ -394,18 +394,21 @@ body.reporting #report { display: block; }
     {
       id: 'o3', kind: 'obj', num: 3, title: 'Agentes de validación Hexagon',
       statement: 'Generar de principio a fin al menos 2 agentes de validación del proceso estandarizado de Hexagon, y mantener documentado el runbook del proceso. Un agente se considera terminado únicamente cuando está desplegado en el ambiente de desarrollo, responde correctamente a su chequeo de salud y ejecuta con éxito al menos una solicitud real de extremo a extremo.',
-      proof: 'Por agente: link al despliegue en dev, captura/log del health check OK y log/traza de una solicitud real procesada E2E. Link al runbook con su historial de cambios.',
+      proof: 'Por agente piloto: PR del agente en el repo del tenant, captura/log del health check en dev y la conversación de una solicitud real en el monitoreo de AgentPlatform. Runbook del proceso con historial de cambios.',
       checklist: [
-        ['proceso', 'Entender y documentar el proceso estandarizado de Hexagon'],
+        ['pilotos', 'Definir los agentes piloto (complejidad baja, media y alta)'],
+        ['proceso', 'Documentar el proceso estandarizado de Hexagon (wizard → PR → despliegue → prueba)'],
         ['runbook', 'Crear el runbook del proceso'],
-        ['runbook-upd', 'Mantener el runbook actualizado tras cada agente']
+        ['rerun', 'Volver a correr los pilotos tras cada funcionalidad relevante de la plataforma'],
+        ['runbook-upd', 'Actualizar el runbook tras cada corrida']
       ],
       table: {
-        title: 'Agentes', add: 'Agregar agente',
-        hint: 'Un agente cuenta como terminado solo con las 3 casillas: desplegado en dev, health check OK y una solicitud real E2E.',
+        title: 'Corridas de agentes piloto', add: 'Agregar corrida',
+        hint: 'Una fila por corrida. Un agente cuenta como terminado cuando al menos una corrida tiene las 3 casillas: desplegado en dev, health check OK y solicitud real E2E.',
         columns: () => [
-          { key: 'agente', label: 'Agente', type: 'text', wide: true },
-          { key: 'desc', label: 'Qué valida', type: 'text', wide: true },
+          { key: 'agente', label: 'Agente piloto', type: 'text', wide: true },
+          { key: 'codigo', label: 'Código', type: 'text' },
+          { key: 'hito', label: 'Hito de plataforma', type: 'text', wide: true },
           { key: 'dev', label: 'Desplegado dev', type: 'bool' },
           { key: 'health', label: 'Health check', type: 'bool' },
           { key: 'e2e', label: 'Solicitud E2E', type: 'bool' },
@@ -415,8 +418,9 @@ body.reporting #report { display: block; }
         ]
       },
       metric: gs => {
-        const ok = gs.rows.filter(r => r.dev && r.health && r.e2e).length;
-        return { big: `${ok}/2`, label: `${ok}/2 agentes terminados`, pct: Math.min(ok / 2, 1), met: ok >= 2 };
+        // Pilots are re-run after each platform milestone, so count distinct agents, not rows.
+        const ok = new Set(gs.rows.filter(r => r.dev && r.health && r.e2e).map(r => (r.agente || r.id).trim().toLowerCase())).size;
+        return { big: `${ok}/2`, label: `${ok}/2 agentes piloto terminados · ${gs.rows.length} corridas`, pct: Math.min(ok / 2, 1), met: ok >= 2 };
       }
     },
     {
@@ -426,15 +430,16 @@ body.reporting #report { display: block; }
       checklist: [
         ['segmentos', 'Definir los segmentos del proceso (primeras 2 semanas)'],
         ['base', 'Línea base de ≥3 agentes de complejidad distinta (primeras 2 semanas)'],
-        ['registro', 'Registrar el tiempo de cada agente generado durante el semestre'],
+        ['registro', 'Registrar el tiempo de cada corrida durante el semestre'],
         ['analisis', 'Comparar la tendencia contra la línea base al cierre']
       ],
       segments: true,
       table: {
-        title: 'Registro por agente', add: 'Agregar agente',
-        hint: 'Registra horas por segmento. La línea base requiere ≥3 agentes de complejidad distinta con fecha de cierre dentro de las primeras 2 semanas.',
+        title: 'Registro por corrida', add: 'Agregar corrida',
+        hint: 'Registra horas por segmento en cada corrida. La línea base son las primeras corridas de ≥3 agentes de complejidad distinta, cerradas dentro de las primeras 2 semanas; las siguientes corridas muestran cómo cambia el tiempo con cada hito de la plataforma.',
         columns: S => [
-          { key: 'agente', label: 'Agente', type: 'text', wide: true },
+          { key: 'agente', label: 'Agente piloto', type: 'text', wide: true },
+          { key: 'hito', label: 'Hito de plataforma', type: 'text', wide: true },
           { key: 'complejidad', label: 'Complejidad', type: 'select', options: ['Baja', 'Media', 'Alta'] },
           { key: 'fin', label: 'Cierre', type: 'date' },
           ...S.segments.map(s => ({ key: 'seg_' + s.id, label: s.name || 'Segmento', type: 'number' })),
@@ -449,7 +454,7 @@ body.reporting #report { display: block; }
         const distinct = new Set(base.map(r => r.complejidad)).size;
         return {
           big: `${distinct}/3`,
-          label: `Línea base: ${distinct}/3 complejidades · ${gs.rows.length} agentes registrados`,
+          label: `Línea base: ${distinct}/3 complejidades · ${gs.rows.length} corridas registradas`,
           extra: `Fecha límite de línea base: ${fmtDate(deadline)} (inicio del período + 14 días).`,
           pct: Math.min(distinct / 3, 1), met: distinct >= 3
         };
