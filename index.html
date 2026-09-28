@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Grow</title>
+<style>
+:root {
+  --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef0f4; --border: #e0e3e9;
+  --text: #1a1e24; --muted: #5d6877;
+  --obj: #3565d0; --obj-soft: #e7eefc; --comp: #0d8574; --comp-soft: #ddf2ee;
+  --ok: #1d8548; --ok-soft: #e0f3e7; --warn: #b06d10; --warn-soft: #fbefd9;
+  --late: #c0392b; --late-soft: #fbe4e1; --idle: #8a94a3; --idle-soft: #eceef2;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.04);
+  --radius: 14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1014; --surface: #161920; --surface-2: #1e222b; --border: #2a2f3a;
+    --text: #e7eaf0; --muted: #9ba5b3;
+    --obj: #7aa2ff; --obj-soft: #1a2542; --comp: #3fc6b0; --comp-soft: #11302b;
+    --ok: #51c483; --ok-soft: #14301f; --warn: #e3ab4d; --warn-soft: #33270e;
+    --late: #ff7a6b; --late-soft: #3a1a17; --idle: #6f7887; --idle-soft: #22262f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1014; --surface: #161920; --surface-2: #1e222b; --border: #2a2f3a;
+  --text: #e7eaf0; --muted: #9ba5b3;
+  --obj: #7aa2ff; --obj-soft: #1a2542; --comp: #3fc6b0; --comp-soft: #11302b;
+  --ok: #51c483; --ok-soft: #14301f; --warn: #e3ab4d; --warn-soft: #33270e;
+  --late: #ff7a6b; --late-soft: #3a1a17; --idle: #6f7887; --idle-soft: #22262f;
+  --shadow: 0 1px 2px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--obj); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 16px 72px; }
+h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+.top h1 { font-size: 28px; letter-spacing: -.02em; }
+.top p { margin: 4px 0 0; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 9px; padding: 7px 12px; font: inherit; font-size: 14px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 4px 9px; font-size: 13px; }
+.btn.danger { color: var(--late); }
+.dirty { font-size: 12.5px; color: var(--warn); background: var(--warn-soft); padding: 4px 9px; border-radius: 99px; }
+
+/* Summary */
+.summary {
+  display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px; box-shadow: var(--shadow); margin-bottom: 18px;
+}
+.ring { position: relative; width: 124px; height: 124px; }
+.ring svg { transform: rotate(-90deg); }
+.ring .val { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.ring .val b { font-size: 28px; letter-spacing: -.02em; display: block; line-height: 1; }
+.ring .val small { color: var(--muted); font-size: 12px; }
+.stats { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-bottom: 16px; }
+.stat b { font-size: 20px; display: block; line-height: 1.1; }
+.stat span { font-size: 13px; color: var(--muted); }
+.period { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 13.5px; color: var(--muted); margin-bottom: 10px; }
+.period label { display: inline-flex; gap: 6px; align-items: center; }
+.period input { font: inherit; font-size: 13.5px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px; padding: 3px 7px; }
+.timeline { position: relative; height: 10px; background: var(--surface-2); border-radius: 99px; margin: 22px 0 26px; }
+.timeline .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--obj); border-radius: 99px; opacity: .85; }
+.timeline .mk { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--text); }
+.timeline .mk span { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; color: var(--muted); }
+.timeline .mk.base { background: var(--warn); }
+.timeline .mk.base span { top: -20px; color: var(--warn); }
+@media (max-width: 720px) { .summary { grid-template-columns: 1fr; justify-items: start; } }
+
+/* Filters */
+.filters { display: flex; gap: 6px; margin: 0 0 14px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 99px; padding: 5px 13px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Cards */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.card {
+  --accent: var(--obj); --accent-soft: var(--obj-soft);
+  text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 16px 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px;
+  transition: border-color .15s, transform .15s;
+}
+.card.comp { --accent: var(--comp); --accent-soft: var(--comp-soft); }
+.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.card.st-done { --accent: var(--ok); }
+.card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tag { font-size: 12px; font-weight: 600; color: var(--accent, var(--obj)); background: var(--accent-soft, var(--obj-soft)); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.card h3 { font-size: 16px; font-weight: 600; }
+.metric-line { margin: 0; font-size: 13.5px; color: var(--muted); }
+.bar { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent, var(--obj)); border-radius: 99px; transition: width .3s; }
+.card-foot { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); margin-top: auto; }
+.pill { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.pill.done { color: var(--ok); background: var(--ok-soft); }
+.pill.progress { color: var(--warn); background: var(--warn-soft); }
+.pill.idle { color: var(--idle); background: var(--idle-soft); }
+.pill.late { color: var(--late); background: var(--late-soft); }
+
+/* Dialog */
+dialog {
+  width: min(1060px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0;
+  border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+dialog::backdrop { background: rgba(8,10,14,.55); }
+.dlg-head {
+  --accent: var(--obj); --accent-soft: var(--obj-soft);
+  position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; justify-content: space-between;
+}
+.dlg-head.comp { --accent: var(--comp); --accent-soft: var(--comp-soft); }
+.dlg-head h2 { font-size: 20px; margin-top: 6px; }
+.dlg-body { padding: 18px 20px 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+.statement > * { min-width: 0; }
+.dlg-body section > h4 { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 10px; display: flex; gap: 8px; align-items: center; }
+.statement { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 760px) { .statement { grid-template-columns: 1fr; } }
+.statement blockquote { margin: 0; padding: 12px 14px; border-left: 3px solid var(--accent, var(--obj)); background: var(--surface-2); border-radius: 0 10px 10px 0; font-size: 14.5px; }
+.proof { padding: 12px 14px; border: 1px dashed var(--border); border-radius: 10px; font-size: 14px; }
+.proof b { display: block; font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 4px; }
+.proof p { margin: 0; }
+.metric-box { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; }
+.metric-box .big { font-size: 22px; font-weight: 650; letter-spacing: -.01em; }
+.metric-box .bar { flex: 1 1 220px; height: 8px; }
+.metric-box .extra { flex-basis: 100%; font-size: 13px; color: var(--muted); margin: 0; }
+.hint { margin: -4px 0 10px; font-size: 13px; color: var(--muted); }
+
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.check { border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; }
+.check.is-done { background: var(--ok-soft); border-color: transparent; }
+.check-main { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.check-main input { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--ok); flex: none; }
+.check details { margin: 4px 0 0 27px; font-size: 13px; }
+.check summary { color: var(--muted); cursor: pointer; }
+.check-ev { display: grid; grid-template-columns: 150px 1fr 1fr; gap: 6px; margin-top: 6px; }
+@media (max-width: 640px) { .check-ev { grid-template-columns: 1fr; } }
+
+.field, .tbl input, .tbl select, textarea {
+  font: inherit; font-size: 13.5px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; width: 100%;
+}
+.field:focus, .tbl input:focus, .tbl select:focus, textarea:focus { outline: none; border-color: var(--accent, var(--obj)); }
+textarea { min-height: 90px; resize: vertical; }
+
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+.tbl { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.tbl th { text-align: left; font-weight: 600; font-size: 12.5px; color: var(--muted); background: var(--surface-2); padding: 8px; white-space: nowrap; }
+.tbl td { padding: 5px 6px; border-top: 1px solid var(--border); vertical-align: middle; }
+.tbl input, .tbl select { border-color: transparent; background: transparent; min-width: 92px; }
+.tbl input:hover, .tbl select:hover { border-color: var(--border); }
+.tbl input.wide { min-width: 210px; }
+.tbl input[type="number"] { min-width: 72px; width: 84px; }
+.tbl input[type="checkbox"] { min-width: 0; width: 17px; height: 17px; accent-color: var(--ok); display: block; margin: 0 auto; }
+.tbl td.center { text-align: center; }
+.tbl td.comp { font-weight: 600; white-space: nowrap; padding: 0 10px; }
+.tbl td.empty { color: var(--muted); text-align: center; padding: 18px; }
+.url-cell { display: flex; align-items: center; gap: 4px; }
+.url-cell a { text-decoration: none; font-size: 14px; padding: 0 4px; }
+.url-cell a[hidden] { display: none; }
+.good { color: var(--ok); } .bad { color: var(--late); } .meh { color: var(--muted); font-weight: 400; }
+.row-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.segs { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: flex; align-items: center; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 3px 4px 3px 3px; }
+.seg input { width: 190px; }
+
+.ev-list { display: grid; gap: 8px; }
+.ev { display: grid; grid-template-columns: 1.1fr 1.4fr 140px auto; gap: 6px; align-items: center; }
+@media (max-width: 720px) { .ev { grid-template-columns: 1fr; padding-bottom: 8px; border-bottom: 1px solid var(--border); } }
+.muted { color: var(--muted); font-size: 13.5px; margin: 0; }
+
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 9px; font-size: 13.5px; opacity: 0; transition: .2s; pointer-events: none; z-index: 10; }
+.toast.show { opacity: 1; transform: translateX(-50%); }
+
+
+/* Read-only detail view */
+.vchecks { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.vchecks li { display: flex; gap: 12px; align-items: flex-start; padding: 9px 4px; border-bottom: 1px solid var(--border); }
+.vchecks li:last-child { border-bottom: 0; }
+.vchecks .tick { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--idle); display: grid; place-items: center; font-size: 12px; font-weight: 700; margin-top: 1px; }
+.vchecks li.on .tick { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.vchecks li:not(.on) .vt { color: var(--muted); }
+.vt { font-size: 14.5px; }
+.vn { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.vm { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.ev-link { text-decoration: none; font-weight: 500; }
+.ev-link:hover { text-decoration: underline; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-ro { font-size: 13px; background: var(--surface-2); border-radius: 99px; padding: 3px 11px; }
+.rcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.rcard { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.rc-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.rc-title { font-weight: 600; font-size: 14.5px; }
+.rc-badges { display: flex; gap: 6px; flex: none; }
+.rc-badge { font-size: 15px; font-weight: 700; background: var(--surface-2); border-radius: 8px; padding: 2px 9px; white-space: nowrap; }
+.rc-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px 12px; margin: 0; }
+.rc-kv div { min-width: 0; }
+.rc-kv dt { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.rc-kv dd { margin: 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.rc-kv .full { grid-column: 1 / -1; }
+.rc-links { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13.5px; }
+.vev { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+.vnotes { margin: 0; white-space: pre-wrap; font-size: 14px; color: var(--muted); }
+.dlg-head .actions { flex: none; }
+
+/* Report */
+#report { display: none; }
+body.reporting #app { display: none; }
+body.reporting #report { display: block; }
+.r-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; align-items: flex-end; border-bottom: 2px solid var(--text); padding-bottom: 12px; margin-bottom: 20px; }
+.r-head h1 { font-size: 26px; }
+.r-head p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.r-goal { border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; background: var(--surface); break-inside: avoid-page; }
+.r-goal.comp { --accent: var(--comp); --accent-soft: var(--comp-soft); }
+.r-goal header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
+.r-goal h2 { font-size: 18px; flex: 1 1 auto; }
+.r-goal h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 14px 0 6px; }
+.r-goal .r-st { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+.r-goal ul { margin: 0; padding-left: 0; list-style: none; font-size: 14px; display: grid; gap: 3px; }
+.r-goal li .d { color: var(--muted); font-size: 12.5px; }
+.r-goal .tbl td { padding: 6px 8px; }
+
+@media print {
+  body { background: #fff; color: #000; font-size: 12px; }
+  .no-print, #app, dialog, .toast { display: none !important; }
+  #report { display: block !important; }
+  .wrap { padding: 0; max-width: none; }
+  .r-goal { border-color: #ccc; }
+  a { color: #0645ad; }
+}
+</style>
+</head>
+<body>
+<div id="app" class="wrap">
+  <div class="top">
+    <div>
+      <h1>Mi Grow</h1>
+      <p>Objetivos y competencias del período · progreso y evidencias</p>
+    </div>
+    <div class="actions">
+      <span class="dirty" id="dirty" hidden>Cambios sin exportar</span>
+      <button class="btn" data-action="export" title="Descarga progreso.js para reemplazarlo en el repo">Exportar progreso.js</button>
+      <button class="btn" data-action="import">Importar</button>
+      <button class="btn primary" data-action="report">Vista reporte</button>
+      <button class="btn ghost" data-action="theme" id="themeBtn" title="Tema">◐</button>
+      <input type="file" id="importFile" accept=".js,.json,application/json,text/javascript" hidden>
+    </div>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="filters" id="filters">
+    <button class="chip on" data-filter="all">Todos</button>
+    <button class="chip" data-filter="obj">Objetivos</button>
+    <button class="chip" data-filter="comp">Competencias</button>
+    <button class="chip" data-filter="pending">Pendientes</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div id="report" class="wrap"></div>
+
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast"></div>
+
+<script src="progreso.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Utilities ----------
+  const LS_KEY = 'mygrow.state.v1';
+  const LS_EXPORT = 'mygrow.lastExport';
+  const LS_THEME = 'mygrow.theme';
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } }
+  };
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const pad = n => String(n).padStart(2, '0');
+  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = () => iso(new Date());
+  const parseDate = s => { if (!s) return null; const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d || 1); };
+  const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return iso(d); };
+  const fmtDate = s => { const d = parseDate(s); return d ? d.toLocaleDateString('es-CR', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; };
+  const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+  const pctText = p => `${Math.round(p * 100)}%`;
+  // Allow http(s), mailto and relative paths (e.g. evidencias/o1/caso.png); block other schemes.
+  const safeUrl = v => {
+    v = String(v || '').trim();
+    if (!v) return null;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(v) && !/^(https?|mailto):/i.test(v)) return null;
+    return v;
+  };
+
+  // ---------- Goal definitions ----------
+  const DEFAULT_SEGMENTS = ['Análisis / requerimientos', 'Diseño', 'Implementación', 'Pruebas', 'Despliegue y validación'];
+  const ratio = r => { const t = num(r.hTrad), a = num(r.hIA); return t && a ? t / a : null; };
+  const segHours = (r, S) => S.segments.reduce((acc, s) => acc + (num(r['seg_' + s.id]) || 0), 0);
+  const baselineDeadline = S => addDays(S.period.start, 14);
+
+  const GOALS = [
+    {
+      id: 'o1', kind: 'obj', num: 1, title: 'Modelo de trabajo AI-First',
+      statement: 'Adoptar un modelo de trabajo AI-First en las actividades técnicamente elegibles de su función, utilizando Inteligencia Artificial de forma habitual para análisis de código, desarrollo, debugging, pruebas o documentación, y demostrar durante el período al menos 3 casos comparables en los que se alcance una productividad igual o superior a 3x frente al proceso tradicional, manteniendo control y validación técnica sobre las soluciones generadas.',
+      proof: 'Tabla de 3+ casos con tiempo tradicional estimado vs. tiempo real con IA (ratio ≥3x), cómo se validó técnicamente cada solución (tests, PR revisado, QA) y links a PRs/commits. Evidencia de uso habitual en las 5 actividades.',
+      checklist: [
+        ['metodo', 'Definir el método de comparación: cómo se estima el proceso tradicional vs. el tiempo real con IA'],
+        ['analisis', 'Uso habitual de IA en análisis de código'],
+        ['desarrollo', 'Uso habitual de IA en desarrollo'],
+        ['debugging', 'Uso habitual de IA en debugging'],
+        ['pruebas', 'Uso habitual de IA en pruebas'],
+        ['docs', 'Uso habitual de IA en documentación'],
+        ['control', 'Validación técnica aplicada a cada solución generada (tests, revisión, QA)']
+      ],
+      table: {
+        title: 'Casos comparables', add: 'Agregar caso',
+        hint: 'Estima cuánto tomaría la tarea sin IA (histórico, story points o juicio experto) y registra el tiempo real con IA. Productividad = tradicional ÷ con IA. Cuenta solo si está validado.',
+        columns: () => [
+          { key: 'caso', label: 'Caso / tarea', type: 'text', wide: true },
+          { key: 'fecha', label: 'Fecha', type: 'date' },
+          { key: 'actividad', label: 'Actividad', type: 'select', options: ['Análisis', 'Desarrollo', 'Debugging', 'Pruebas', 'Documentación'] },
+          { key: 'hTrad', label: 'Tradicional (h)', type: 'number' },
+          { key: 'hIA', label: 'Con IA (h)', type: 'number' },
+          { key: 'ratio', label: 'Productividad', type: 'computed', calc: r => { const x = ratio(r); return x == null ? '<span class="meh">—</span>' : `<span class="${x >= 3 ? 'good' : 'bad'}">${x.toFixed(1)}x</span>`; } },
+          { key: 'validacion', label: 'Cómo se validó', type: 'text', wide: true },
+          { key: 'validado', label: 'Validado', type: 'bool' },
+          { key: 'evidencia', label: 'Evidencia', type: 'url' }
+        ]
+      },
+      metric: gs => {
+        const ok = gs.rows.filter(r => (ratio(r) || 0) >= 3 && r.validado).length;
+        return { big: `${ok}/3`, label: `${ok}/3 casos ≥3x validados`, pct: Math.min(ok / 3, 1), met: ok >= 3 };
+      }
+    },
+    {
+      id: 'o2', kind: 'obj', num: 2, title: 'Tiempo productivo ≥ 70%', doneLabel: 'En meta',
+      statement: 'Alcanzar y mantener un promedio mínimo del 70% de tiempo productivo reportado durante el período de evaluación, calculado con base en los registros oficiales de productividad del departamento.',
+      proof: 'Captura o export mensual del registro oficial de productividad; promedio del período ≥70%.',
+      checklist: [
+        ['fuente', 'Identificar la fuente oficial de registros de productividad'],
+        ['mensual', 'Registrar el % cada mes del período'],
+        ['ajuste', 'Revisar cada mes y ajustar si queda por debajo de 70%']
+      ],
+      table: {
+        title: 'Registro mensual', add: 'Agregar mes',
+        hint: 'Copia el % mensual desde los registros oficiales del departamento y adjunta la captura.',
+        columns: () => [
+          { key: 'mes', label: 'Mes', type: 'month' },
+          { key: 'pct', label: '% productivo', type: 'number' },
+          { key: 'ok', label: 'Meta', type: 'computed', calc: r => { const p = num(r.pct); return p == null ? '<span class="meh">—</span>' : (p >= 70 ? '<span class="good">✓ ≥70</span>' : '<span class="bad">✗ &lt;70</span>'); } },
+          { key: 'fuente', label: 'Fuente / nota', type: 'text', wide: true },
+          { key: 'evidencia', label: 'Evidencia', type: 'url' }
+        ]
+      },
+      metric: gs => {
+        const vals = gs.rows.map(r => num(r.pct)).filter(v => v != null);
+        if (!vals.length) return { big: '—', label: 'Sin meses registrados', pct: 0, met: false };
+        const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+        return { big: `${avg.toFixed(1)}%`, label: `Promedio ${avg.toFixed(1)}% (meta ≥70%) · ${vals.length} ${vals.length === 1 ? 'mes' : 'meses'}`, pct: Math.min(avg / 70, 1), met: avg >= 70 };
+      }
+    },
+    {
+      id: 'o3', kind: 'obj', num: 3, title: 'Agentes de validación Hexagon',
+      statement: 'Generar de principio a fin al menos 2 agentes de validación del proceso estandarizado de Hexagon, y mantener documentado el runbook del proceso. Un agente se considera terminado únicamente cuando está desplegado en el ambiente de desarrollo, responde correctamente a su chequeo de salud y ejecuta con éxito al menos una solicitud real de extremo a extremo.',
+      proof: 'Por agente: link al despliegue en dev, captura/log del health check OK y log/traza de una solicitud real procesada E2E. Link al runbook con su historial de cambios.',
+      checklist: [
+        ['proceso', 'Entender y documentar el proceso estandarizado de Hexagon'],
+        ['runbook', 'Crear el runbook del proceso'],
+        ['runbook-upd', 'Mantener el runbook actualizado tras cada agente']
+      ],
+      table: {
+        title: 'Agentes', add: 'Agregar agente',
+        hint: 'Un agente cuenta como terminado solo con las 3 casillas: desplegado en dev, health check OK y una solicitud real E2E.',
+        columns: () => [
+          { key: 'agente', label: 'Agente', type: 'text', wide: true },
+          { key: 'desc', label: 'Qué valida', type: 'text', wide: true },
+          { key: 'dev', label: 'Desplegado dev', type: 'bool' },
+          { key: 'health', label: 'Health check', type: 'bool' },
+          { key: 'e2e', label: 'Solicitud E2E', type: 'bool' },
+          { key: 'estado', label: 'Estado', type: 'computed', calc: r => (r.dev && r.health && r.e2e) ? '<span class="good">Terminado</span>' : '<span class="meh">En curso</span>' },
+          { key: 'fecha', label: 'Fecha', type: 'date' },
+          { key: 'evidencia', label: 'Evidencia', type: 'url' }
+        ]
+      },
+      metric: gs => {
+        const ok = gs.rows.filter(r => r.dev && r.health && r.e2e).length;
+        return { big: `${ok}/2`, label: `${ok}/2 agentes terminados`, pct: Math.min(ok / 2, 1), met: ok >= 2 };
+      }
+    },
+    {
+      id: 'o4', kind: 'obj', num: 4, title: 'Medición del tiempo de generación de agentes',
+      statement: 'Establecer y mantener la medición del tiempo de generación de agentes: definir los segmentos del proceso, medir la línea base sobre al menos 3 agentes de complejidad distinta durante las primeras dos semanas del período, y llevar el registro por agente durante todo el semestre.',
+      proof: 'Documento con los segmentos del proceso (fechado en las primeras 2 semanas), línea base de 3 agentes (baja / media / alta) y registro de tiempos por agente durante el semestre.',
+      checklist: [
+        ['segmentos', 'Definir los segmentos del proceso (primeras 2 semanas)'],
+        ['base', 'Línea base de ≥3 agentes de complejidad distinta (primeras 2 semanas)'],
+        ['registro', 'Registrar el tiempo de cada agente generado durante el semestre'],
+        ['analisis', 'Comparar la tendencia contra la línea base al cierre']
+      ],
+      segments: true,
+      table: {
+        title: 'Registro por agente', add: 'Agregar agente',
+        hint: 'Registra horas por segmento. La línea base requiere ≥3 agentes de complejidad distinta con fecha de cierre dentro de las primeras 2 semanas.',
+        columns: S => [
+          { key: 'agente', label: 'Agente', type: 'text', wide: true },
+          { key: 'complejidad', label: 'Complejidad', type: 'select', options: ['Baja', 'Media', 'Alta'] },
+          { key: 'fin', label: 'Cierre', type: 'date' },
+          ...S.segments.map(s => ({ key: 'seg_' + s.id, label: s.name || 'Segmento', type: 'number' })),
+          { key: 'total', label: 'Total (h)', type: 'computed', calc: (r, S) => { const t = segHours(r, S); return t ? t.toFixed(1) : '<span class="meh">—</span>'; } },
+          { key: 'base', label: 'Línea base', type: 'computed', calc: (r, S) => (r.fin && r.fin <= baselineDeadline(S)) ? '<span class="good">Sí</span>' : '<span class="meh">No</span>' },
+          { key: 'evidencia', label: 'Evidencia', type: 'url' }
+        ]
+      },
+      metric: (gs, S) => {
+        const deadline = baselineDeadline(S);
+        const base = gs.rows.filter(r => r.fin && r.fin <= deadline && r.complejidad);
+        const distinct = new Set(base.map(r => r.complejidad)).size;
+        return {
+          big: `${distinct}/3`,
+          label: `Línea base: ${distinct}/3 complejidades · ${gs.rows.length} agentes registrados`,
+          extra: `Fecha límite de línea base: ${fmtDate(deadline)} (inicio del período + 14 días).`,
+          pct: Math.min(distinct / 3, 1), met: distinct >= 3
+        };
+      },
+      isLate: (gs, S, m) => !m.met && today() > baselineDeadline(S)
+    },
+    {
+      id: 'c1', kind: 'comp', num: 1, title: 'Revisión automática de PRs con IA',
+      statement: 'Implementar revisión automática de Pull Requests asistida por IA en AgentPlatform y Boilerplate, incluyendo revisión de estándares, defectos potenciales y calidad del código.',
+      proof: 'Configuración (workflow / action / bot) en ambos repos y PRs con comentarios de la revisión IA mostrando hallazgos de estándares, defectos y calidad.',
+      checklist: [
+        ['tool', 'Definir herramienta y reglas/prompt de revisión (estándares del equipo)'],
+        ['ap', 'Revisión automática activa en AgentPlatform'],
+        ['bp', 'Revisión automática activa en Boilerplate'],
+        ['std', 'La revisión cubre estándares'],
+        ['def', 'La revisión detecta defectos potenciales'],
+        ['qual', 'La revisión evalúa calidad del código'],
+        ['doc', 'Documentar configuración y uso para el equipo']
+      ],
+      table: {
+        title: 'PRs revisados por IA', add: 'Agregar PR',
+        hint: 'Un repo cuenta como cubierto cuando al menos un PR muestra revisión de estándares, defectos y calidad.',
+        columns: () => [
+          { key: 'repo', label: 'Repo', type: 'select', options: ['AgentPlatform', 'Boilerplate', 'Otro'] },
+          { key: 'pr', label: 'PR', type: 'url' },
+          { key: 'fecha', label: 'Fecha', type: 'date' },
+          { key: 'std', label: 'Estándares', type: 'bool' },
+          { key: 'def', label: 'Defectos', type: 'bool' },
+          { key: 'qual', label: 'Calidad', type: 'bool' },
+          { key: 'hallazgos', label: 'Hallazgos', type: 'number' },
+          { key: 'nota', label: 'Nota', type: 'text', wide: true }
+        ]
+      },
+      metric: gs => {
+        const covered = new Set(gs.rows.filter(r => r.std && r.def && r.qual && (r.repo === 'AgentPlatform' || r.repo === 'Boilerplate')).map(r => r.repo));
+        const n = covered.size;
+        return { big: `${n}/2`, label: `${n}/2 repos con revisión IA completa`, pct: n / 2, met: n >= 2 };
+      }
+    },
+    {
+      id: 'c2', kind: 'comp', num: 2, title: 'Git, PRs y revisión de diffs IA',
+      statement: 'Aplicar correctamente Git, branching, commits, Pull Requests y revisión de diffs generados por IA, asegurando que el 100% de los cambios realizados mediante IA sean revisados antes de su integración al repositorio.',
+      proof: 'Historial de branches y commits con convención, PRs con descripción y revisión, y un registro que muestre 100% de los cambios IA revisados antes del merge.',
+      checklist: [
+        ['branch', 'Estrategia de branching definida y aplicada'],
+        ['commits', 'Commits con convención consistente (ej. Conventional Commits)'],
+        ['prtpl', 'PRs con descripción / plantilla y revisión'],
+        ['diffck', 'Checklist personal para revisar diffs generados por IA'],
+        ['protect', 'Nada generado por IA se integra sin PR revisado (branch protection)']
+      ],
+      table: {
+        title: 'Registro de PRs', add: 'Agregar PR',
+        hint: 'Cada cambio hecho con IA debe tener el diff revisado antes del merge. Meta: 100%.',
+        columns: () => [
+          { key: 'pr', label: 'PR', type: 'url' },
+          { key: 'repo', label: 'Repo', type: 'text' },
+          { key: 'branch', label: 'Branch', type: 'text' },
+          { key: 'fecha', label: 'Fecha', type: 'date' },
+          { key: 'ia', label: 'Cambios con IA', type: 'bool' },
+          { key: 'rev', label: 'Diff revisado', type: 'bool' },
+          { key: 'nota', label: 'Nota', type: 'text', wide: true }
+        ]
+      },
+      metric: gs => {
+        const ai = gs.rows.filter(r => r.ia);
+        const rev = ai.filter(r => r.rev).length;
+        if (!ai.length) return { big: '—', label: 'Sin PRs con IA registrados', pct: 0, met: false };
+        const p = rev / ai.length;
+        return { big: pctText(p), label: `${rev}/${ai.length} cambios con IA revisados (${pctText(p)})`, pct: p, met: p === 1 };
+      }
+    },
+    {
+      id: 'c3', kind: 'comp', num: 3, title: 'Agentic software engineering',
+      statement: 'Agentic software engineering: creación y utilización de subagentes, MCP, herramientas, automatizaciones y separación de responsabilidades entre planning, implementation, testing y review.',
+      proof: 'Definiciones de subagentes, configuración MCP, herramientas / automatizaciones creadas, y una tarea real que muestre el flujo planning → implementation → testing → review.',
+      checklist: [
+        ['sub', 'Crear y usar subagentes especializados'],
+        ['mcp', 'Configurar y usar servidores MCP'],
+        ['tools', 'Crear herramientas / skills propias'],
+        ['auto', 'Automatizaciones (hooks, workflows, tareas programadas)'],
+        ['flow', 'Separar planning, implementation, testing y review en una tarea real']
+      ],
+      table: {
+        title: 'Artefactos agénticos', add: 'Agregar artefacto',
+        hint: 'Registra cada artefacto creado o usado. Meta: cubrir los 5 tipos.',
+        columns: () => [
+          { key: 'nombre', label: 'Nombre', type: 'text', wide: true },
+          { key: 'tipo', label: 'Tipo', type: 'select', options: ['Subagente', 'MCP', 'Herramienta / skill', 'Automatización', 'Flujo planning→review'] },
+          { key: 'uso', label: 'Para qué se usa', type: 'text', wide: true },
+          { key: 'fecha', label: 'Fecha', type: 'date' },
+          { key: 'evidencia', label: 'Evidencia', type: 'url' }
+        ]
+      },
+      metric: gs => {
+        const n = new Set(gs.rows.map(r => r.tipo).filter(Boolean)).size;
+        return { big: `${n}/5`, label: `${n}/5 tipos de artefacto cubiertos`, pct: n / 5, met: n >= 5 };
+      }
+    },
+    {
+      id: 'c4', kind: 'comp', num: 4, title: 'Prácticas avanzadas con líder técnico',
+      statement: 'Adopción de prácticas avanzadas de desarrollo asistido por IA con acompañamiento de su líder técnico, evidenciada en al menos 3 entregables reales.',
+      proof: '3 entregables reales (PR, feature, release) con nota o aprobación del líder técnico sobre las prácticas aplicadas.',
+      checklist: [
+        ['plan', 'Acordar con el líder técnico las prácticas a adoptar'],
+        ['seg', 'Sesiones de seguimiento con el líder técnico'],
+        ['lessons', 'Documentar aprendizajes y buenas prácticas']
+      ],
+      table: {
+        title: 'Entregables', add: 'Agregar entregable',
+        hint: 'Entregables reales construidos con prácticas IA avanzadas y validados por el líder técnico.',
+        columns: () => [
+          { key: 'entregable', label: 'Entregable', type: 'text', wide: true },
+          { key: 'fecha', label: 'Fecha', type: 'date' },
+          { key: 'practicas', label: 'Prácticas aplicadas', type: 'text', wide: true },
+          { key: 'lider', label: 'Validado por líder', type: 'bool' },
+          { key: 'evidencia', label: 'Evidencia', type: 'url' }
+        ]
+      },
+      metric: gs => {
+        const ok = gs.rows.filter(r => r.lider).length;
+        return { big: `${ok}/3`, label: `${ok}/3 entregables validados por el líder`, pct: Math.min(ok / 3, 1), met: ok >= 3 };
+      }
+    }
+  ];
+  const byId = id => GOALS.find(g => g.id === id);
+
+  // ---------- State ----------
+  function defaultState() {
+    return {
+      version: 1, updatedAt: null,
+      period: { start: '2026-09-01', end: '2027-02-28' },
+      segments: DEFAULT_SEGMENTS.map(name => ({ id: uid(), name })),
+      goals: {}
+    };
+  }
+  function normalize(S) {
+    S = S && typeof S === 'object' ? S : {};
+    const d = defaultState();
+    S.version = 1;
+    S.period = Object.assign(d.period, S.period || {});
+    if (!Array.isArray(S.segments) || !S.segments.length) S.segments = d.segments;
+    S.goals = S.goals || {};
+    GOALS.forEach(g => {
+      const gs = S.goals[g.id] = S.goals[g.id] || {};
+      gs.checks = gs.checks || {};
+      g.checklist.forEach(([id]) => { gs.checks[id] = Object.assign({ done: false, date: '', link: '', note: '' }, gs.checks[id] || {}); });
+      gs.rows = Array.isArray(gs.rows) ? gs.rows : [];
+      gs.evidence = Array.isArray(gs.evidence) ? gs.evidence : [];
+      gs.notes = gs.notes || '';
+    });
+    return S;
+  }
+  function load() {
+    let local = null;
+    try { local = JSON.parse(store.get(LS_KEY)); } catch (e) { local = null; }
+    const file = window.GROW_DATA || null;
+    let src = local || file;
+    // Prefer whichever copy was edited most recently (repo file vs. this browser).
+    if (local && file) src = (file.updatedAt || '') > (local.updatedAt || '') ? file : local;
+    return normalize(JSON.parse(JSON.stringify(src || {})));
+  }
+  let S = load();
+  let saveTimer = null;
+  function save() {
+    S.updatedAt = new Date().toISOString();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => store.set(LS_KEY, JSON.stringify(S)), 150);
+    updateDirty();
+  }
+  function flush() { clearTimeout(saveTimer); store.set(LS_KEY, JSON.stringify(S)); }
+  window.addEventListener('beforeunload', flush);
+
+  function updateDirty() {
+    const fileTs = window.GROW_DATA && window.GROW_DATA.updatedAt;
+    const dirty = !!S.updatedAt && S.updatedAt !== fileTs && S.updatedAt !== store.get(LS_EXPORT);
+    $('#dirty').hidden = !dirty;
+  }
+
+  // ---------- Evaluation ----------
+  function evaluate(g) {
+    const gs = S.goals[g.id];
+    const total = g.checklist.length;
+    const done = g.checklist.filter(([id]) => gs.checks[id].done).length;
+    const m = g.metric(gs, S);
+    const pct = ((total ? done / total : 1) + m.pct) / 2;
+    let status = 'progress';
+    if (done === total && m.met) status = 'done';
+    else if (done === 0 && !gs.rows.length && !gs.evidence.length) status = 'idle';
+    if (status !== 'done' && g.isLate && g.isLate(gs, S, m)) status = 'late';
+    return { done, total, m, pct, status };
+  }
+  const STATUS = { done: 'Completado', progress: 'En progreso', idle: 'Sin iniciar', late: 'Atrasado' };
+  const statusLabel = (g, st) => st === 'done' && g.doneLabel ? g.doneLabel : STATUS[st];
+  const kindLabel = g => `#${g.num} · ${g.kind === 'obj' ? 'Objetivo' : 'Competencia'}`;
+
+  // ---------- Overview ----------
+  let filter = 'all';
+  function renderSummary() {
+    const evals = GOALS.map(evaluate);
+    const overall = evals.reduce((a, e) => a + e.pct, 0) / evals.length;
+    const count = st => evals.filter(e => e.status === st).length;
+    const r = 52, c = 2 * Math.PI * r;
+    const { start, end } = S.period;
+    const sd = parseDate(start), ed = parseDate(end), now = parseDate(today());
+    const span = ed && sd ? Math.max(ed - sd, 1) : 1;
+    const pos = d => Math.min(Math.max((d - sd) / span, 0), 1) * 100;
+    const daysLeft = ed ? Math.ceil((ed - now) / 864e5) : 0;
+    const base = parseDate(baselineDeadline(S));
+    $('#summary').innerHTML = `
+      <div class="ring">
+        <svg width="124" height="124" viewBox="0 0 124 124" aria-hidden="true">
+          <circle cx="62" cy="62" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="11"/>
+          <circle cx="62" cy="62" r="${r}" fill="none" stroke="var(--ok)" stroke-width="11" stroke-linecap="round"
+            stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - overall)}"/>
+        </svg>
+        <div class="val"><div><b>${pctText(overall)}</b><small>avance total</small></div></div>
+      </div>
+      <div>
+        <div class="stats">
+          <div class="stat"><b>${count('done')}/${GOALS.length}</b><span>completados</span></div>
+          <div class="stat"><b>${count('progress')}</b><span>en progreso</span></div>
+          <div class="stat"><b>${count('idle')}</b><span>sin iniciar</span></div>
+          ${count('late') ? `<div class="stat"><b style="color:var(--late)">${count('late')}</b><span>atrasados</span></div>` : ''}
+          <div class="stat"><b>${daysLeft > 0 ? daysLeft : 0}</b><span>días restantes</span></div>
+        </div>
+        <div class="period">
+          <label>Inicio <input type="date" data-period="start" value="${esc(start)}"></label>
+          <label>Fin <input type="date" data-period="end" value="${esc(end)}"></label>
+          <span>${fmtDate(start)} → ${fmtDate(end)}</span>
+        </div>
+        <div class="timeline" aria-hidden="true">
+          <div class="fill" style="width:${pos(now)}%"></div>
+          <div class="mk base" style="left:${pos(base)}%"><span>Línea base O4</span></div>
+          <div class="mk" style="left:${pos(now)}%"><span>Hoy</span></div>
+        </div>
+      </div>`;
+  }
+  function cardHTML(g) {
+    const e = evaluate(g);
+    return `<button class="card ${g.kind} st-${e.status}" data-open="${g.id}">
+      <div class="card-top"><span class="tag">${kindLabel(g)}</span><span class="pill ${e.status}">${statusLabel(g, e.status)}</span></div>
+      <h3>${esc(g.title)}</h3>
+      <p class="metric-line">${esc(e.m.label)}</p>
+      <div class="bar"><i style="width:${pctText(e.pct)}"></i></div>
+      <div class="card-foot"><span>${e.done}/${e.total} tareas</span><span>${pctText(e.pct)}</span></div>
+    </button>`;
+  }
+  function renderGrid() {
+    const list = GOALS.filter(g => {
+      if (filter === 'obj' || filter === 'comp') return g.kind === filter;
+      if (filter === 'pending') return evaluate(g).status !== 'done';
+      return true;
+    });
+    $('#grid').innerHTML = list.map(cardHTML).join('') || '<p class="muted">Nada pendiente. 🎉</p>';
+  }
+  function renderAll() { renderSummary(); renderGrid(); updateDirty(); }
+
+  // ---------- Detail dialog ----------
+  const dlg = $('#dlg');
+  let current = null;
+  let editing = false;
+
+  function metricHTML(g) {
+    const e = evaluate(g);
+    return `<div class="big">${esc(e.m.big)}</div>
+      <div style="flex:1 1 220px"><div class="bar" style="--accent:${e.m.met ? 'var(--ok)' : 'var(--accent)'}"><i style="width:${pctText(e.m.pct)}"></i></div>
+      <p class="muted" style="margin-top:6px">${esc(e.m.label)}</p></div>
+      <span class="pill ${e.status}">${statusLabel(g, e.status)} · ${pctText(e.pct)}</span>
+      ${e.m.extra ? `<p class="extra">${esc(e.m.extra)}</p>` : ''}`;
+  }
+  function cellHTML(c, r) {
+    const bind = `data-bind="row:${r.id}:${c.key}"`;
+    const v = r[c.key] ?? '';
+    switch (c.type) {
+      case 'bool': return `<td class="center"><input type="checkbox" ${bind} ${v ? 'checked' : ''} aria-label="${esc(c.label)}"></td>`;
+      case 'select': return `<td><select ${bind}><option value=""></option>${c.options.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></td>`;
+      case 'computed': return `<td class="comp" data-comp="${r.id}:${c.key}">${c.calc(r, S)}</td>`;
+      case 'url': {
+        const u = safeUrl(v);
+        return `<td><div class="url-cell"><input type="text" ${bind} data-url value="${esc(v)}" placeholder="link o ruta"><a href="${esc(u || '#')}" target="_blank" rel="noopener" title="Abrir" ${u ? '' : 'hidden'}>↗</a></div></td>`;
+      }
+      case 'number': return `<td><input type="number" step="any" ${bind} value="${esc(v)}"></td>`;
+      case 'date': return `<td><input type="date" ${bind} value="${esc(v)}"></td>`;
+      case 'month': return `<td><input type="month" ${bind} value="${esc(v)}"></td>`;
+      default: return `<td><input type="text" ${bind} value="${esc(v)}" ${c.wide ? 'class="wide"' : ''}></td>`;
+    }
+  }
+  function viewSectionsHTML(g, gs, cols) {
+    const link = (u, label) => { const s = safeUrl(u); return s ? `<a class="ev-link" href="${esc(s)}" target="_blank" rel="noopener">${esc(label)} ↗</a>` : ''; };
+    const shown = cols.filter(c => gs.rows.some(r => r[c.key] !== undefined && r[c.key] !== '' && r[c.key] !== false) || c.type === 'computed');
+    return `
+        <section>
+          <h4>Tareas <span data-checkcount>${evaluate(g).done}/${g.checklist.length}</span></h4>
+          <ul class="vchecks">${g.checklist.map(([id, text]) => {
+            const c = gs.checks[id];
+            const meta = [c.done && c.date ? esc(fmtDate(c.date)) : '', link(c.link, 'Ver evidencia')].filter(Boolean).join(' · ');
+            return `<li class="${c.done ? 'on' : ''}">
+              <span class="tick" aria-hidden="true">${c.done ? '✓' : ''}</span>
+              <div><div class="vt">${esc(text)}</div>
+                ${c.note ? `<div class="vn">${esc(c.note)}</div>` : ''}
+                ${meta ? `<div class="vm">${meta}</div>` : ''}</div>
+            </li>`;
+          }).join('')}</ul>
+        </section>
+
+        ${g.segments ? `<section><h4>Segmentos del proceso</h4>
+          <div class="chips">${S.segments.map(s => `<span class="chip-ro">${esc(s.name)}</span>`).join('')}</div></section>` : ''}
+
+        <section>
+          <h4>${esc(g.table.title)} <span class="muted">(${gs.rows.length})</span></h4>
+          ${gs.rows.length ? `<div class="rcards">${gs.rows.map(r => {
+            const title = cols[0];
+            const comps = shown.filter(c => c.type === 'computed');
+            const urls = shown.filter(c => c.type === 'url' && safeUrl(r[c.key]));
+            const rest = shown.filter(c => c !== title && c.type !== 'computed' && c.type !== 'url' && r[c.key] !== undefined && r[c.key] !== '');
+            return `<div class="rcard">
+              <div class="rc-top"><div class="rc-title">${title.type === 'url' ? link(r[title.key], r[title.key]) : esc(r[title.key] || 'Sin nombre')}</div>
+                <div class="rc-badges">${comps.map(c => `<span class="rc-badge" title="${esc(c.label)}">${c.calc(r, S)}</span>`).join('')}</div></div>
+              <dl class="rc-kv">${rest.map(c => `<div class="${c.wide ? 'full' : ''}"><dt>${esc(c.label)}</dt><dd>${reportValue(c, r)}</dd></div>`).join('')}</dl>
+              ${urls.length ? `<div class="rc-links">${urls.map(c => link(r[c.key], c.label)).join('')}</div>` : ''}
+            </div>`;
+          }).join('')}</div>` : `<p class="muted">Sin registros todavía. ${esc(g.table.hint)}</p>`}
+        </section>
+
+        ${gs.evidence.length ? `<section><h4>Evidencias</h4>
+          <ul class="vev">${gs.evidence.map(e => `<li>${link(e.url, e.title || e.url) || esc(e.title)} <span class="muted">${e.date ? esc(fmtDate(e.date)) : ''}</span></li>`).join('')}</ul></section>` : ''}
+
+        ${gs.notes ? `<section><h4>Notas</h4><p class="vnotes">${esc(gs.notes)}</p></section>` : ''}
+`;
+  }
+  function editSectionsHTML(g, gs, cols) {
+    return `
+        <section>
+          <h4>Tareas <span data-checkcount>${evaluate(g).done}/${g.checklist.length}</span></h4>
+          <ul class="checks">${g.checklist.map(([id, text]) => {
+            const c = gs.checks[id];
+            const u = safeUrl(c.link);
+            return `<li class="check ${c.done ? 'is-done' : ''}" data-check="${id}">
+              <label class="check-main"><input type="checkbox" data-bind="check:${id}:done" ${c.done ? 'checked' : ''}><span>${esc(text)}</span></label>
+              <details ${c.link || c.note ? 'open' : ''}><summary>Fecha y evidencia</summary>
+                <div class="check-ev">
+                  <input class="field" type="date" data-bind="check:${id}:date" value="${esc(c.date)}" aria-label="Fecha">
+                  <div class="url-cell"><input class="field" type="text" data-bind="check:${id}:link" data-url value="${esc(c.link)}" placeholder="Link o ruta (evidencias/${g.id}-…/archivo.png)"><a href="${esc(u || '#')}" target="_blank" rel="noopener" title="Abrir" ${u ? '' : 'hidden'}>↗</a></div>
+                  <input class="field" type="text" data-bind="check:${id}:note" value="${esc(c.note)}" placeholder="Nota">
+                </div>
+              </details>
+            </li>`;
+          }).join('')}</ul>
+        </section>
+
+        ${g.segments ? `<section>
+          <h4>Segmentos del proceso</h4>
+          <p class="hint">Estos segmentos definen las columnas de horas del registro.</p>
+          <div class="segs">${S.segments.map(s => `<div class="seg"><input class="field" type="text" data-bind="seg:${s.id}:name" value="${esc(s.name)}"><button class="btn small ghost danger" data-action="del-seg" data-id="${s.id}" title="Quitar">✕</button></div>`).join('')}
+          <button class="btn small" data-action="add-seg">+ Segmento</button></div>
+        </section>` : ''}
+
+        <section>
+          <h4>${esc(g.table.title)} <span class="muted">(${gs.rows.length})</span></h4>
+          <p class="hint">${esc(g.table.hint)}</p>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr>${cols.map(c => `<th>${esc(c.label)}</th>`).join('')}<th></th></tr></thead>
+            <tbody>${gs.rows.length ? gs.rows.map(r => `<tr>${cols.map(c => cellHTML(c, r)).join('')}<td><button class="btn small ghost danger" data-action="del-row" data-id="${r.id}" title="Eliminar fila">✕</button></td></tr>`).join('')
+              : `<tr><td class="empty" colspan="${cols.length + 1}">Sin registros todavía.</td></tr>`}</tbody>
+          </table></div>
+          <div class="row-actions"><button class="btn small" data-action="add-row">+ ${esc(g.table.add)}</button></div>
+        </section>
+
+        <section>
+          <h4>Evidencias adicionales</h4>
+          <div class="ev-list">${gs.evidence.map(e => {
+            const u = safeUrl(e.url);
+            return `<div class="ev">
+              <input class="field" type="text" data-bind="ev:${e.id}:title" value="${esc(e.title)}" placeholder="Título">
+              <div class="url-cell"><input class="field" type="text" data-bind="ev:${e.id}:url" data-url value="${esc(e.url)}" placeholder="Link o ruta"><a href="${esc(u || '#')}" target="_blank" rel="noopener" title="Abrir" ${u ? '' : 'hidden'}>↗</a></div>
+              <input class="field" type="date" data-bind="ev:${e.id}:date" value="${esc(e.date)}">
+              <button class="btn small ghost danger" data-action="del-ev" data-id="${e.id}" title="Eliminar">✕</button>
+            </div>`;
+          }).join('') || '<p class="muted">Capturas, documentos, PRs, correos del líder… Guarda los archivos en <code>evidencias/' + g.id + '-…/</code> y enlaza la ruta relativa.</p>'}</div>
+          <div class="row-actions"><button class="btn small" data-action="add-ev">+ Evidencia</button></div>
+        </section>
+
+        <section>
+          <h4>Notas</h4>
+          <textarea data-bind="notes:${g.id}:notes" placeholder="Contexto, bloqueos, próximos pasos…">${esc(gs.notes)}</textarea>
+        </section>
+`;
+  }
+  function renderDetail() {
+    const g = current, gs = S.goals[g.id];
+    const cols = g.table.columns(S);
+    const scroll = dlg.scrollTop;
+    dlg.innerHTML = `
+      <div class="dlg-head ${g.kind}">
+        <div><span class="tag">${kindLabel(g)}</span><h2>${esc(g.title)}</h2></div>
+        <div class="actions">
+          <button class="btn small ${editing ? 'primary' : ''}" data-action="toggle-edit">${editing ? '✓ Listo' : '✎ Editar'}</button>
+          <button class="btn small" data-action="close" aria-label="Cerrar">✕</button>
+        </div>
+      </div>
+      <div class="dlg-body" style="--accent:var(--${g.kind})">
+        <section class="statement">
+          <blockquote>${esc(g.statement)}</blockquote>
+          <div class="proof"><b>Cómo demostrarlo</b><p>${esc(g.proof)}</p></div>
+        </section>
+
+        <section><h4>Indicador</h4><div class="metric-box" data-metric>${metricHTML(g)}</div></section>
+
+        ${editing ? editSectionsHTML(g, gs, cols) : viewSectionsHTML(g, gs, cols)}
+      </div>`;
+    dlg.scrollTop = scroll;
+  }
+  function refreshDetail() {
+    if (!current || !dlg.open) return;
+    const g = current, gs = S.goals[g.id];
+    $('[data-metric]', dlg).innerHTML = metricHTML(g);
+    $('[data-checkcount]', dlg).textContent = `${evaluate(g).done}/${g.checklist.length}`;
+    $$('[data-check]', dlg).forEach(li => li.classList.toggle('is-done', gs.checks[li.dataset.check].done));
+    const cols = g.table.columns(S).filter(c => c.type === 'computed');
+    gs.rows.forEach(r => cols.forEach(c => {
+      const td = dlg.querySelector(`[data-comp="${r.id}:${c.key}"]`);
+      if (td) td.innerHTML = c.calc(r, S);
+    }));
+  }
+  function openGoal(id) {
+    current = byId(id);
+    editing = false;
+    renderDetail();
+    if (!dlg.open) dlg.showModal();
+    dlg.scrollTop = 0;
+  }
+  dlg.addEventListener('close', () => { current = null; flush(); renderAll(); });
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+  // ---------- Data binding ----------
+  function applyBind(el) {
+    const [kind, id, key] = el.dataset.bind.split(':');
+    const val = el.type === 'checkbox' ? el.checked : el.value;
+    const gs = current && S.goals[current.id];
+    if (kind === 'check') {
+      const c = gs.checks[id];
+      c[key] = val;
+      if (key === 'done' && val && !c.date) {
+        c.date = today();
+        const di = dlg.querySelector(`[data-bind="check:${id}:date"]`);
+        if (di) di.value = c.date;
+      }
+    } else if (kind === 'row') {
+      const r = gs.rows.find(x => x.id === id);
+      if (r) r[key] = val;
+    } else if (kind === 'ev') {
+      const e = gs.evidence.find(x => x.id === id);
+      if (e) e[key] = val;
+    } else if (kind === 'seg') {
+      const s = S.segments.find(x => x.id === id);
+      if (s) s.name = val;
+    } else if (kind === 'notes') {
+      gs.notes = val;
+    }
+    if (el.hasAttribute('data-url')) {
+      const a = el.parentElement.querySelector('a');
+      const u = safeUrl(val);
+      a.hidden = !u; a.href = u || '#';
+    }
+    save();
+    refreshDetail();
+  }
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (el.dataset.bind && el.type !== 'checkbox') applyBind(el);
+  });
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (el.dataset.bind && el.type === 'checkbox') applyBind(el);
+    // Segment names are column headers, so redraw the table once editing finishes.
+    if (el.dataset.bind && el.dataset.bind.startsWith('seg:')) renderDetail();
+    if (el.dataset.period) {
+      if (el.value) { S.period[el.dataset.period] = el.value; save(); renderAll(); }
+    }
+  });
+
+  // ---------- Actions ----------
+  const toast = msg => { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800); };
+
+  document.addEventListener('click', e => {
+    const open = e.target.closest('[data-open]');
+    if (open) return openGoal(open.dataset.open);
+    const chip = e.target.closest('[data-filter]');
+    if (chip) {
+      filter = chip.dataset.filter;
+      $$('[data-filter]').forEach(c => c.classList.toggle('on', c === chip));
+      return renderGrid();
+    }
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const gs = current && S.goals[current.id];
+    const id = btn.dataset.id;
+    switch (btn.dataset.action) {
+      case 'close': dlg.close(); break;
+      case 'toggle-edit': editing = !editing; renderDetail(); break;
+      case 'add-row': {
+        const row = { id: uid() };
+        gs.rows.push(row); save(); renderDetail();
+        const first = dlg.querySelector(`[data-bind^="row:${row.id}:"]`);
+        if (first) first.focus();
+        break;
+      }
+      case 'del-row':
+        if (confirm('¿Eliminar esta fila?')) { gs.rows = gs.rows.filter(r => r.id !== id); save(); renderDetail(); }
+        break;
+      case 'add-ev':
+        gs.evidence.push({ id: uid(), title: '', url: '', date: today() }); save(); renderDetail();
+        break;
+      case 'del-ev':
+        if (confirm('¿Eliminar esta evidencia?')) { gs.evidence = gs.evidence.filter(x => x.id !== id); save(); renderDetail(); }
+        break;
+      case 'add-seg':
+        S.segments.push({ id: uid(), name: 'Nuevo segmento' }); save(); renderDetail();
+        break;
+      case 'del-seg':
+        if (S.segments.length <= 1) return toast('Debe quedar al menos un segmento');
+        if (confirm('¿Quitar este segmento? Se ocultan sus horas registradas.')) { S.segments = S.segments.filter(s => s.id !== id); save(); renderDetail(); }
+        break;
+      case 'export': exportData(); break;
+      case 'import': $('#importFile').click(); break;
+      case 'report': renderReport(); document.body.classList.add('reporting'); window.scrollTo(0, 0); break;
+      case 'back': document.body.classList.remove('reporting'); break;
+      case 'print': renderReport(); window.print(); break;
+      case 'theme': cycleTheme(); break;
+    }
+  });
+
+  function exportData() {
+    flush();
+    const content = `// Mi Grow progress data. Generated by index.html -> "Exportar progreso.js". Commit this file.\nwindow.GROW_DATA = ${JSON.stringify(S, null, 2)};\n`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], { type: 'text/javascript' }));
+    a.download = 'progreso.js';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    store.set(LS_EXPORT, S.updatedAt || '');
+    updateDirty();
+    toast('progreso.js descargado: reemplázalo en la raíz del repo');
+  }
+  $('#importFile').addEventListener('change', async e => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+      const text = await f.text();
+      const json = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
+      const data = JSON.parse(json);
+      if (!data || !data.goals) throw new Error('formato');
+      if (!confirm('Esto reemplaza el progreso actual de este navegador. ¿Continuar?')) return;
+      S = normalize(data); flush(); renderAll(); toast('Progreso importado');
+    } catch (err) { alert('No se pudo leer el archivo: ' + err.message); }
+  });
+
+  // ---------- Theme ----------
+  const THEMES = ['auto', 'light', 'dark'];
+  function applyTheme(t) {
+    if (t === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', t);
+    $('#themeBtn').textContent = { auto: '◐ Auto', light: '☀ Claro', dark: '☾ Oscuro' }[t];
+  }
+  function cycleTheme() {
+    const cur = store.get(LS_THEME) || 'auto';
+    const next = THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length];
+    store.set(LS_THEME, next); applyTheme(next);
+  }
+  applyTheme(store.get(LS_THEME) || 'auto');
+
+  // ---------- Report ----------
+  function reportValue(c, r) {
+    const v = r[c.key];
+    if (c.type === 'computed') return c.calc(r, S);
+    if (c.type === 'bool') return v ? '<span class="good">✓</span>' : '<span class="meh">—</span>';
+    if (c.type === 'url') { const u = safeUrl(v); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(v || ''); }
+    if (c.type === 'date') return esc(fmtDate(v));
+    return esc(v ?? '');
+  }
+  function renderReport() {
+    const evals = GOALS.map(evaluate);
+    const overall = evals.reduce((a, e) => a + e.pct, 0) / evals.length;
+    const done = evals.filter(e => e.status === 'done').length;
+    $('#report').innerHTML = `
+      <div class="r-head">
+        <div><h1>Mi Grow · Reporte de avance</h1>
+          <p>Período ${fmtDate(S.period.start)} → ${fmtDate(S.period.end)} · generado el ${fmtDate(today())}</p>
+          <p>Avance total <b>${pctText(overall)}</b> · ${done}/${GOALS.length} completados</p></div>
+        <div class="actions no-print">
+          <button class="btn" data-action="back">← Volver</button>
+          <button class="btn primary" data-action="print">Imprimir / PDF</button>
+        </div>
+      </div>
+      ${GOALS.map((g, i) => {
+        const e = evals[i], gs = S.goals[g.id];
+        const cols = g.table.columns(S);
+        return `<article class="r-goal ${g.kind}">
+          <header><span class="tag">${kindLabel(g)}</span><h2>${esc(g.title)}</h2><span class="pill ${e.status}">${statusLabel(g, e.status)} · ${pctText(e.pct)}</span></header>
+          <p class="r-st">${esc(g.statement)}</p>
+          <p style="margin:0"><b>Indicador:</b> ${esc(e.m.label)}${e.m.extra ? ' · ' + esc(e.m.extra) : ''}</p>
+          <h3>Tareas (${e.done}/${e.total})</h3>
+          <ul>${g.checklist.map(([id, text]) => {
+            const c = gs.checks[id], u = safeUrl(c.link);
+            return `<li>${c.done ? '<span class="good">✓</span>' : '<span class="meh">○</span>'} ${esc(text)}
+              ${c.date && c.done ? `<span class="d">· ${fmtDate(c.date)}</span>` : ''}
+              ${u ? ` · <a href="${esc(u)}" target="_blank" rel="noopener">evidencia</a>` : ''}
+              ${c.note ? `<span class="d">· ${esc(c.note)}</span>` : ''}</li>`;
+          }).join('')}</ul>
+          ${gs.rows.length ? `<h3>${esc(g.table.title)}</h3>
+            <div class="tbl-wrap"><table class="tbl"><thead><tr>${cols.map(c => `<th>${esc(c.label)}</th>`).join('')}</tr></thead>
+            <tbody>${gs.rows.map(r => `<tr>${cols.map(c => `<td>${reportValue(c, r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : ''}
+          ${gs.evidence.length ? `<h3>Evidencias</h3><ul>${gs.evidence.map(x => {
+            const u = safeUrl(x.url);
+            return `<li>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(x.title || x.url)}</a>` : esc(x.title)} <span class="d">${x.date ? '· ' + fmtDate(x.date) : ''}</span></li>`;
+          }).join('')}</ul>` : ''}
+          ${gs.notes ? `<h3>Notas</h3><p style="margin:0;white-space:pre-wrap;font-size:14px">${esc(gs.notes)}</p>` : ''}
+        </article>`;
+      }).join('')}`;
+  }
+  window.addEventListener('beforeprint', renderReport);
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
