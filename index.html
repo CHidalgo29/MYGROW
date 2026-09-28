@@ -226,6 +226,10 @@ textarea { min-height: 90px; resize: vertical; }
 .vnotes { margin: 0; white-space: pre-wrap; font-size: 14px; color: var(--muted); }
 .dlg-head .actions { flex: none; }
 
+.declared { margin: 8px 0 0; font-size: 13px; color: var(--warn); background: var(--warn-soft); padding: 8px 12px; border-radius: 9px; }
+.override { display: flex; gap: 8px; align-items: center; margin: 10px 0 6px; font-size: 14px; cursor: pointer; }
+.override input { accent-color: var(--ok); width: 16px; height: 16px; }
+
 /* Report */
 #report { display: none; }
 body.reporting #app { display: none; }
@@ -595,6 +599,7 @@ body.reporting #report { display: block; }
       gs.rows = Array.isArray(gs.rows) ? gs.rows : [];
       gs.evidence = Array.isArray(gs.evidence) ? gs.evidence : [];
       gs.notes = gs.notes || '';
+      gs.override = Object.assign({ done: false, note: '', date: '' }, gs.override || {});
     });
     return S;
   }
@@ -629,13 +634,17 @@ body.reporting #report { display: block; }
     const gs = S.goals[g.id];
     const total = g.checklist.length;
     const done = g.checklist.filter(([id]) => gs.checks[id].done).length;
-    const m = g.metric(gs, S);
-    const pct = ((total ? done / total : 1) + m.pct) / 2;
+    let m = g.metric(gs, S);
+    // A manual override marks the goal complete even without recorded data; it stays flagged as declared.
+    const declared = gs.override.done;
+    if (declared) m = Object.assign({}, m, { label: gs.override.note || 'Completado manualmente', pct: 1, met: true });
+    const pct = declared ? 1 : ((total ? done / total : 1) + m.pct) / 2;
     let status = 'progress';
     if (done === total && m.met) status = 'done';
     else if (done === 0 && !gs.rows.length && !gs.evidence.length) status = 'idle';
+    if (declared) status = 'done';
     if (status !== 'done' && g.isLate && g.isLate(gs, S, m)) status = 'late';
-    return { done, total, m, pct, status };
+    return { done, total, m, pct, status, declared };
   }
   const STATUS = { done: 'Completado', progress: 'En progreso', idle: 'Sin iniciar', late: 'Atrasado' };
   const statusLabel = (g, st) => st === 'done' && g.doneLabel ? g.doneLabel : STATUS[st];
@@ -852,7 +861,11 @@ body.reporting #report { display: block; }
           <div class="proof"><b>Cómo demostrarlo</b><p>${esc(g.proof)}</p></div>
         </section>
 
-        <section><h4>Indicador</h4><div class="metric-box" data-metric>${metricHTML(g)}</div></section>
+        <section><h4>Indicador</h4><div class="metric-box" data-metric>${metricHTML(g)}</div>
+          ${gs.override.done && !gs.rows.length ? `<p class="declared">Completado manualmente${gs.override.date ? ' el ' + esc(fmtDate(gs.override.date)) : ''}, sin registros de respaldo. Agrega los meses y las capturas para poder demostrarlo.</p>` : ''}
+          ${editing ? `<label class="override"><input type="checkbox" data-bind="override:${g.id}:done" ${gs.override.done ? 'checked' : ''}> Marcar como completado manualmente</label>
+          <input class="field" type="text" data-bind="override:${g.id}:note" value="${esc(gs.override.note)}" placeholder="Motivo (se muestra como indicador)">` : ''}
+        </section>
 
         ${editing ? editSectionsHTML(g, gs, cols) : viewSectionsHTML(g, gs, cols)}
       </div>`;
@@ -902,6 +915,9 @@ body.reporting #report { display: block; }
     } else if (kind === 'seg') {
       const s = S.segments.find(x => x.id === id);
       if (s) s.name = val;
+    } else if (kind === 'override') {
+      gs.override[key] = val;
+      if (key === 'done') gs.override.date = val ? today() : '';
     } else if (kind === 'notes') {
       gs.notes = val;
     }
@@ -922,6 +938,7 @@ body.reporting #report { display: block; }
     if (el.dataset.bind && el.type === 'checkbox') applyBind(el);
     // Segment names are column headers, so redraw the table once editing finishes.
     if (el.dataset.bind && el.dataset.bind.startsWith('seg:')) renderDetail();
+    if (el.dataset.bind && el.dataset.bind.startsWith('override:')) renderDetail();
     if (el.dataset.period) {
       if (el.value) { S.period[el.dataset.period] = el.value; save(); renderAll(); }
     }
@@ -1025,6 +1042,7 @@ body.reporting #report { display: block; }
     if (c.type === 'bool') return v ? '<span class="good">✓</span>' : '<span class="meh">—</span>';
     if (c.type === 'url') { const u = safeUrl(v); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(v || ''); }
     if (c.type === 'date') return esc(fmtDate(v));
+    if (c.type === 'month' && v) { const d = parseDate(v); return esc(d.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' })); }
     return esc(v ?? '');
   }
   function renderReport() {
@@ -1047,7 +1065,7 @@ body.reporting #report { display: block; }
         return `<article class="r-goal ${g.kind}">
           <header><span class="tag">${kindLabel(g)}</span><h2>${esc(g.title)}</h2><span class="pill ${e.status}">${statusLabel(g, e.status)} · ${pctText(e.pct)}</span></header>
           <p class="r-st">${esc(g.statement)}</p>
-          <p style="margin:0"><b>Indicador:</b> ${esc(e.m.label)}${e.m.extra ? ' · ' + esc(e.m.extra) : ''}</p>
+          <p style="margin:0"><b>Indicador:</b> ${esc(e.m.label)}${e.m.extra ? ' · ' + esc(e.m.extra) : ''}${e.declared ? ' <i>(completado manualmente)</i>' : ''}</p>
           <h3>Tareas (${e.done}/${e.total})</h3>
           <ul>${g.checklist.map(([id, text]) => {
             const c = gs.checks[id], u = safeUrl(c.link);
