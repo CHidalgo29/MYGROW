@@ -1,7 +1,7 @@
 # Runbook: generación de un agente en Hexagon (de principio a fin)
 
 > Documento vivo. Se actualiza después de cada corrida de un agente piloto (ver *Historial de cambios*).
-> Los pasos marcados **(por confirmar)** se completan en la primera corrida.
+> Los pasos marcados **(por confirmar)** se completan en la primera corrida. La corrida 1 (2026-10-12) resolvió los de despliegue y health check; ver `piloto1-2026-10-12/bitacora.md`.
 
 ## Propósito
 
@@ -11,18 +11,22 @@ Recorrer el proceso estandarizado de Hexagon con agentes piloto para:
 
 ## Agentes piloto
 
-| Piloto | Complejidad | Qué ejercita | Código |
-|---|---|---|---|
-| Piloto 1 | Baja | Solo prompt (sin tools ni knowledge base) | (por asignar) |
-| Piloto 2 | Media | Prompt por capas + 1–2 tools contra una API | (por asignar) |
-| Piloto 3 | Alta | Tools + knowledge base (RAG) + memoria | (por asignar) |
+Confirmado con el líder del grow: el objetivo son **2 agentes nuevos, creados de inicio a fin en Hexagon**, cada uno
+configurado con cada una de las propiedades (capacidades) del agente. El proceso es **iterativo**.
+Por ahora se crea **1 agente** y se guarda la evidencia; el segundo se crea en la siguiente iteración.
 
-Los mismos pilotos se vuelven a correr cada vez que sale una funcionalidad relevante (ej. memoria larga, gateways, guardrails),
-para que las corridas sean comparables entre sí.
+| Piloto | Qué ejercita | Código |
+|---|---|---|
+| Piloto 1 (primero) | Todas las propiedades disponibles hoy: prompt por capas, tool contra API (PokeAPI), métrica personalizada, memoria, knowledge base **(por confirmar la lista exacta con el líder)** | `agent-000053` — Pokedex Assistant (corrida 1: 2026-10-12, v1.0.0) |
+| Piloto 2 (siguiente iteración) | Igual que el piloto 1, con un caso de uso distinto | (por asignar) |
+
+Cada vez que sale una funcionalidad relevante de la plataforma (ej. memoria larga, gateways, guardrails),
+se vuelve a recorrer el proceso para que las corridas sean comparables entre sí.
 
 ## Cuándo correr los pilotos
 
-- **Línea base**: primeras 2 semanas del período, con los 3 pilotos.
+- **Ahora**: Piloto 1 de inicio a fin, con evidencia completa.
+- **Siguiente iteración**: Piloto 2, hasta tener los 2 agentes desplegados en dev.
 - **Después de cada hito de plataforma** que cambie lo que un agente puede hacer o cómo se genera.
   Anotar el hito (PR / release de AgentPlatform) en la corrida.
 
@@ -60,13 +64,12 @@ Si un segmento se repite por un error (ej. volver a publicar), el tiempo se suma
 - [ ] Revisar el diff generado y hacer merge. Guardar el link del PR.
 
 ### 4. Despliegue en dev y health check
-- [ ] Verificar el despliegue del workload (Deployment, Service, Ingress) en el namespace de agentes del tenant **(por confirmar: comando o pantalla)**.
-- [ ] Ver el estado *desplegado* del agente en AgentPlatform.
-- [ ] Ejecutar el health check **(por confirmar: endpoint)** y guardar la respuesta.
+- [ ] Verificar el despliegue desde la UI, sin acceso al cluster: en el detalle del agente debe aparecer *Desplegado · Working* con la versión (ej. `v1.0.0`).
+- [ ] Abrir **Diagnosis** en el detalle del agente (es el health check): versión en ejecución, LLM Gateway OK, credencial de ejecución entregada, Tool Gateway alcanzable, memoria de corto y largo plazo habilitadas. Guardar la captura. (El Tool Gateway puede mostrar "Reachable (401)": responde, el 401 es el sondeo sin credencial.)
 
 ### 5. Prueba E2E
-- [ ] Enviar la solicitud real definida en el paso 1.
-- [ ] Verificar la respuesta y las llamadas a tools en el monitoreo de conversaciones.
+- [ ] Enviar la solicitud real definida en el paso 1 desde el botón **Test agent** del detalle del agente.
+- [ ] Verificar la respuesta y las llamadas a tools en la pestaña **Monitoring** del agente (sesión con trazas y métrica personalizada incrementada).
 - [ ] Guardar la captura o el link de la conversación.
 
 ### Cierre de la corrida
@@ -87,10 +90,14 @@ Si un segmento se repite por un error (ej. volver a publicar), el tiempo se suma
 
 | Fecha | Problema | Solución |
 |---|---|---|
-| | | |
+| 2026-10-12 | Crear knowledge base falla con `ORA-20005: La extension "tif" esta en la ruta de OCR pero no en los tipos permitidos` | Agregar TIF y TIFF a *Allowed types* (el control es un `select` múltiple) |
+| 2026-10-12 | El diálogo de subir documentos exige categoría y tipo, y solo existen las categorías de documento "Recursos Humanos" y "Campaign manager" | Usar la más genérica y tipo "Manual"; pendiente definir si hay una categoría adecuada |
+| 2026-10-12 | En el paso Prompt, escribir en el textarea de Boundaries no lo registra | Usar *Add* con una sugerencia del catálogo o texto propio con categoría |
+| 2026-10-12 | Aviso transitorio "failed —" tras subir un documento | Recargar la página: el documento queda `Ready` |
 
 ## Historial de cambios
 
 | Fecha | Cambio | Corrida |
 |---|---|---|
 | 2026-09-28 | Versión inicial del runbook (plantilla) | — |
+| 2026-10-12 | Resueltos los "por confirmar" de despliegue (UI) y health check (*Diagnosis*); agregados problemas conocidos y pilotos (ahora 2 agentes, iterativo) | Corrida 1 — `agent-000053` v1.0.0, PR KolbiTappAgents#400 |

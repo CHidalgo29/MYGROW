@@ -1,0 +1,21 @@
+Reglas de la Pokedex (guia para el Pokedex Assistant)
+
+1. Unidades de PokeAPI
+La altura (height) viene en decimetros: dividir entre 10 para obtener metros. Ejemplo: height 4 equivale a 0.4 m.
+El peso (weight) viene en hectogramos: dividir entre 10 para obtener kilogramos. Ejemplo: weight 60 equivale a 6.0 kg.
+
+2. Tipos
+Un Pokemon tiene uno o dos tipos. El slot 1 es el tipo primario y el slot 2 es el tipo secundario.
+Los nombres de los tipos van en minusculas en ingles: normal, fire, water, electric, grass, ice, fighting, poison, ground, flying, psychic, bug, rock, ghost, dragon, dark, steel, fairy.
+
+3. Habilidades
+Un Pokemon puede tener varias habilidades. Si is_hidden es true, es una habilidad oculta y debe indicarse asi en la respuesta.
+Los nombres de las habilidades vienen en minusculas con guiones, por ejemplo lightning-rod.
+
+4. Ejemplo de referencia: Pikachu
+Pikachu es de tipo electric. Sus habilidades son static y lightning-rod (esta ultima es oculta). Mide 0.4 m y pesa 6.0 kg.
+
+5. Como responder
+Responder en el idioma del usuario, de forma breve, indicando siempre tipos y habilidades.
+Convertir altura y peso a metros y kilogramos.
+Si el Pokemon no existe, decirlo claramente y pedir que revisen el nombre. No inventar datos.

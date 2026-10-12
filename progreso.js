@@ -277,23 +277,77 @@ window.GROW_DATA = {
     },
     "o3": {
       "checks": {
-        "runbook": {
+        "pilotos": {
           "done": false,
           "date": "",
+          "link": "evidencias/o3-agentes-hexagon/piloto1-2026-10-12/plan.md",
+          "note": "Piloto 1 definido (Pokedex Assistant, PokeAPI); falta definir el piloto 2"
+        },
+        "proceso": {
+          "done": true,
+          "date": "2026-10-12",
+          "link": "evidencias/o3-agentes-hexagon/runbook-proceso-agentes.md#procedimiento",
+          "note": "Proceso recorrido de principio a fin en dev: wizard → PR automático → despliegue → Diagnosis → Test agent"
+        },
+        "runbook": {
+          "done": true,
+          "date": "2026-10-12",
           "link": "evidencias/o3-agentes-hexagon/runbook-proceso-agentes.md",
-          "note": "Plantilla creada; se completa con la primera corrida"
+          "note": "Resueltos los pasos por confirmar con la corrida 1"
+        },
+        "runbook-upd": {
+          "done": true,
+          "date": "2026-10-12",
+          "link": "evidencias/o3-agentes-hexagon/runbook-proceso-agentes.md#historial-de-cambios",
+          "note": "Actualizado tras la corrida 1 (problemas conocidos e historial)"
         }
       },
-      "rows": [],
+      "rows": [
+        {
+          "id": "r1",
+          "agente": "Pokedex Assistant (piloto 1)",
+          "codigo": "agent-000053",
+          "hito": "Línea base · v1.0.0",
+          "dev": true,
+          "health": true,
+          "e2e": true,
+          "fecha": "2026-10-12",
+          "evidencia": "evidencias/o3-agentes-hexagon/piloto1-2026-10-12/bitacora.md"
+        }
+      ],
       "evidence": [
         {
           "id": "e1",
-          "title": "Runbook del proceso (plantilla)",
+          "title": "Runbook del proceso",
           "url": "evidencias/o3-agentes-hexagon/runbook-proceso-agentes.md",
-          "date": "2026-09-28"
+          "date": "2026-10-12"
+        },
+        {
+          "id": "e2",
+          "title": "PR del agente: Agent: agent-000053@1.0.0 (mergeado)",
+          "url": "https://github.com/SoinLabs/KolbiTappAgents/pull/400",
+          "date": "2026-10-12"
+        },
+        {
+          "id": "e3",
+          "title": "Health check: panel Diagnosis en dev",
+          "url": "evidencias/o3-agentes-hexagon/piloto1-2026-10-12/health-diagnostico.jpg",
+          "date": "2026-10-12"
+        },
+        {
+          "id": "e4",
+          "title": "Solicitud real E2E: conversación Pikachu",
+          "url": "evidencias/o3-agentes-hexagon/piloto1-2026-10-12/e2e-conversacion.jpg",
+          "date": "2026-10-12"
+        },
+        {
+          "id": "e5",
+          "title": "Bitácora de la corrida 1 (recursos, tiempos, observaciones)",
+          "url": "evidencias/o3-agentes-hexagon/piloto1-2026-10-12/bitacora.md",
+          "date": "2026-10-12"
         }
       ],
-      "notes": "Agentes piloto: recorren el proceso de principio a fin y se vuelven a correr tras cada funcionalidad relevante de la plataforma (ej. memoria larga).\nPendiente: definir los 3 pilotos (baja, media y alta) y hacer la primera corrida."
+      "notes": "Confirmado con el líder: 2 agentes nuevos de inicio a fin en Hexagon, cada uno con todas las propiedades; proceso iterativo. Por ahora se crea 1 y se guarda la evidencia.\nSe vuelve a recorrer el proceso tras cada funcionalidad relevante de la plataforma (ej. memoria larga).\nCorrida 1 (2026-10-12): Pokedex Assistant (agent-000053 v1.0.0) desplegado en dev, health check OK (Diagnosis) y solicitud E2E exitosa; PR KolbiTappAgents#400.\nPendiente: piloto 2 (caso de uso distinto) y volver a correr tras el siguiente hito de plataforma."
     },
     "o4": {
       "checks": {
@@ -304,7 +358,21 @@ window.GROW_DATA = {
           "note": "5 segmentos alineados al proceso de Hexagon (definición → configuración → PR → despliegue → E2E)"
         }
       },
-      "rows": [],
+      "rows": [
+        {
+          "id": "r1",
+          "agente": "Pokedex Assistant (piloto 1)",
+          "hito": "Línea base · v1.0.0",
+          "complejidad": "Alta",
+          "fin": "2026-10-12",
+          "seg_s1": "0.03",
+          "seg_s2": "0.19",
+          "seg_s3": "0.03",
+          "seg_s4": "0.13",
+          "seg_s5": "0.01",
+          "evidencia": "evidencias/o3-agentes-hexagon/piloto1-2026-10-12/bitacora.md#segmentos-para-o4"
+        }
+      ],
       "evidence": [
         {
           "id": "e1",
@@ -314,6 +382,36 @@ window.GROW_DATA = {
         }
       ],
       "notes": "Las corridas de los pilotos de O3 alimentan esta medición. La línea base son las primeras corridas de los 3 pilotos; cada hito de plataforma genera una corrida nueva para comparar."
+    },
+    "c3": {
+      "checks": {
+        "sub": {
+          "done": true,
+          "date": "2026-09-28",
+          "link": "~/.claude/agents/",
+          "note": "8 subagentes propios definidos en ~/.claude/agents/: quick-search, worker, deep-reviewer (política de costo por modelo) y el pipeline devflow personal my-planner, my-skeptic, my-implementer, my-critic, my-verifier"
+        }
+      },
+      "rows": [
+        {
+          "id": "sa1",
+          "nombre": "quick-search / worker / deep-reviewer",
+          "tipo": "Subagente",
+          "uso": "Selección de modelo por costo: haiku para búsquedas rápidas, sonnet para implementación, opus reservado para revisión de arquitectura/seguridad",
+          "fecha": "2026-07-29",
+          "evidencia": "~/.claude/agents/quick-search.md"
+        },
+        {
+          "id": "sa2",
+          "nombre": "my-planner / my-skeptic / my-implementer / my-critic / my-verifier",
+          "tipo": "Subagente",
+          "uso": "Pipeline personal devflow: plan → duda → implementa → revisa → verifica, con criterios de éxito verificables entre etapas",
+          "fecha": "2026-09-28",
+          "evidencia": "~/.claude/agents/my-planner.md"
+        }
+      ],
+      "evidence": [],
+      "notes": ""
     }
   }
 };
